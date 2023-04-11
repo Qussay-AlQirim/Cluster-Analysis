@@ -1,0 +1,206 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(cluster)
+library(factoextra)
+library(gridExtra)
+```
+
+
+```{r}
+#Import Data Set
+df <- read.csv(file = "Week 2_Mall_Customers.csv")
+Customer <- read.csv(file = "Week 2_Mall_Customers.csv")
+
+```
+
+```{r}
+# Exploratory Data Analysis
+
+
+#Omit Missing Values
+df <- na.omit(df)
+
+#Change the gender to a Numeric (Male = 0 & Female = 1)
+
+df$Gender<- ifelse(df$Gender == "Male", 0, 1)
+
+#Change Column Names
+df <- rename(df,Spending.Score = Spending.Score..1.100.)
+df <- rename(df,Annual.Income = Annual.Income..k..)
+
+#Dropping CustomerID
+df <-  subset(df, select = -c(CustomerID) )
+
+
+
+```
+
+```{r}
+#View Data Structure
+str(df)
+
+summary(df)
+
+ggplot(df, mapping = (aes(df$Gender)))+
+  geom_bar()+
+  xlab("Gender")
+
+female_count <- sum(df$Gender=='1')
+female_count
+
+male_count <- sum(df$Gender=='0')
+male_count
+
+qplot(df$Age)
+min(df$Age)
+max(df$Age)
+
+ggplot(df, mapping =aes(df$Age)) +
+  geom_boxplot()+
+  xlab('Age')
+
+ggplot(df, mapping =aes(df$Annual.Income)) +
+  geom_boxplot()+
+  xlab('Annual Income')
+
+ggplot(df, mapping =aes(df$Spending.Score)) +
+  geom_boxplot()+
+  xlab('Spending Score')
+```
+
+
+```{r}
+#Elbow Method
+
+fviz_nbclust(df, kmeans, method = "wss") +
+    geom_vline(xintercept = 4, linetype = 2)+
+    labs(subtitle = "Elbow method")+
+     scale_y_continuous(labels = scales::comma)
+
+```
+
+
+```{r}
+#Cluster analysis on 2 groups
+
+k2 <- kmeans(df, centers = 2, nstart = 25)
+str(k2)
+
+k2
+
+#Visualizing the Cluster
+
+v2 <- fviz_cluster(k2, data = df, geom="point")
+v2
+
+
+#Visualize cluster on the dataset
+
+dv2<- df %>%
+  as_tibble() %>%
+  mutate(cluster = k2$cluster) %>%
+  ggplot(aes(Annual.Income, Spending.Score, color = factor(cluster))) +
+  geom_point()
+
+dv2
+```
+
+
+```{r}
+#Cluster analysis on 3 groups
+
+k3 <- kmeans(df, centers = 3, nstart = 25)
+str(k3)
+
+k3
+
+#Visualizing the Cluster
+
+v3 <- fviz_cluster(k3, data = df, geom="point")
+v3
+
+
+#Visualize cluster on the dataset
+
+dv3<- df %>%
+  as_tibble() %>%
+  mutate(cluster = k3$cluster) %>%
+  ggplot(aes(Annual.Income, Spending.Score, color = factor(cluster), label = Gender)) +
+  geom_text()
+
+dv3
+```
+
+
+```{r}
+#Cluster analysis on 4 groups
+
+k4 <- kmeans(df, centers = 4, nstart = 25)
+str(k4)
+
+k4
+
+#Visualizing the Cluster
+
+v4 <- fviz_cluster(k4, data = df, geom="point")
+v4
+
+
+#Visualize cluster on the dataset
+
+dv4<- df %>%
+  as_tibble() %>%
+  mutate(cluster = k4$cluster) %>%
+  ggplot(aes(Annual.Income, Spending.Score, color = factor(cluster), label = Gender)) +
+  geom_text(stat='identity')
+
+dv4
+```
+
+
+```{r}
+#Cluster analysis on 5 groups
+
+k5 <- kmeans(df, centers = 5, nstart = 25)
+str(k5)
+
+k5
+
+#Visualizing the Cluster
+
+v5 <- fviz_cluster(k5, data = df, geom="point")
+v5
+
+
+#Visualize cluster on the dataset
+
+dv5<- df %>%
+  as_tibble() %>%
+  mutate(cluster = k5$cluster) %>%
+  ggplot(aes(Annual.Income, Spending.Score, color = factor(cluster), label = Gender)) +
+  geom_text(stat='identity')
+
+dv5
+```
+
+```{r}
+
+grid.arrange(v2,v3,v4,v5,nrow=2)
+
+```
+
+```{r}
+ Customer %>%
+  mutate(Cluster = k3$cluster) %>%
+  group_by(Cluster) %>%
+  summarise_all("mean")
+```
+
